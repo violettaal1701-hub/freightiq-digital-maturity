@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreightIQ — Digital Maturity Assessment</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#07111f; --panel:#0d1b2d; --panel2:#11243a; --text:#edf6ff;
+  --muted:#8ea5bb; --accent:#48d6b5; --accent2:#5da9ff; --warning:#ffca68;
+  --border:rgba(255,255,255,.09); --shadow:0 24px 70px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--text); background:
+  radial-gradient(circle at 10% 0%,rgba(72,214,181,.12),transparent 30%),
+  radial-gradient(circle at 90% 15%,rgba(93,169,255,.13),transparent 28%),var(--bg);
+}
+.shell{max-width:1180px;margin:auto;padding:34px 22px 70px}
+nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px}
+.brand{font-weight:850;letter-spacing:-.04em;font-size:22px}
+.brand span{color:var(--accent)}
+.navtag{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:8px 12px;border-radius:999px}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:30px;align-items:center;margin-bottom:38px}
+.eyebrow{color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+h1{font-size:clamp(42px,7vw,78px);line-height:.96;letter-spacing:-.065em;margin:12px 0 18px;max-width:800px}
+.hero p{color:var(--muted);font-size:17px;line-height:1.7;max-width:720px}
+.hero-card,.card{
+  border:1px solid var(--border);background:linear-gradient(145deg,rgba(17,36,58,.94),rgba(10,24,40,.94));
+  border-radius:24px;box-shadow:var(--shadow)
+}
+.hero-card{padding:25px}
+.metric{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--border)}
+.metric:last-child{border:0}.metric b{font-size:22px}.metric span{color:var(--muted);font-size:13px}
+.progress-wrap{position:sticky;top:0;z-index:20;background:rgba(7,17,31,.88);backdrop-filter:blur(16px);padding:13px 0 16px;margin-bottom:18px}
+.progress-row{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:8px}
+.progress{height:6px;background:#16283b;border-radius:99px;overflow:hidden}
+#bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.25s}
+.dimension{margin:22px 0;padding:28px}
+.dim-head{display:flex;gap:17px;align-items:flex-start;margin-bottom:24px}
+.num{min-width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:rgba(72,214,181,.12);color:var(--accent);font-weight:900}
+h2{margin:0 0 7px;font-size:24px;letter-spacing:-.03em}.dim-head p{margin:0;color:var(--muted);line-height:1.5}
+.question{padding:22px 0;border-top:1px solid var(--border)}
+.question:first-of-type{border-top:0}
+.q-title{font-size:16px;font-weight:720;line-height:1.5;margin-bottom:14px}
+.options{display:grid;gap:9px}
+.option{position:relative}
+.option input{position:absolute;opacity:0;pointer-events:none}
+.option label{
+ display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border:1px solid var(--border);
+ border-radius:13px;color:#c9d8e6;background:rgba(255,255,255,.018);cursor:pointer;transition:.18s
+}
+.option label:hover{border-color:rgba(72,214,181,.4);transform:translateY(-1px)}
+.level{
+ min-width:25px;height:25px;border-radius:7px;background:#182b40;display:grid;place-items:center;
+ color:var(--muted);font-size:11px;font-weight:800
+}
+.option input:checked+label{border-color:var(--accent);background:rgba(72,214,181,.09);color:#fff}
+.option input:checked+label .level{background:var(--accent);color:#061713}
+.actions{text-align:center;padding:30px 0 12px}
+button{
+ border:0;border-radius:14px;padding:16px 25px;background:linear-gradient(135deg,var(--accent),#68e7c8);
+ color:#052019;font-weight:900;font-size:15px;cursor:pointer;box-shadow:0 12px 32px rgba(72,214,181,.18)
+}
+button:hover{transform:translateY(-2px)}
+#error{display:none;color:#ff9b9b;margin:15px auto 0;max-width:650px}
+#results{display:none;margin-top:35px}
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.chart-card,.insight-card{padding:26px}
+canvas{max-height:430px}
+.result-kicker{color:var(--accent);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.profile-title{font-size:34px;line-height:1.05;letter-spacing:-.045em;margin:9px 0 13px}
+.profile-copy{color:var(--muted);line-height:1.65}
+.priority{margin-top:20px;padding:17px;border-radius:15px;background:rgba(255,202,104,.08);border:1px solid rgba(255,202,104,.18)}
+.priority small{color:var(--warning);font-weight:800;text-transform:uppercase;letter-spacing:.09em}
+.priority p{margin:7px 0 0;line-height:1.5}
+.score-list{margin-top:20px;display:grid;gap:9px}
+.score-row{display:grid;grid-template-columns:1fr auto;gap:15px;padding:10px 0;border-bottom:1px solid var(--border);color:#cbd9e6}
+.score-row b{color:#fff}
+.low{color:var(--warning)!important}
+footer{text-align:center;color:#587086;font-size:12px;margin-top:48px}
+@media(max-width:800px){.hero,.results-grid{grid-template-columns:1fr}.hero-card{display:none}.dimension{padding:20px}h1{font-size:48px}.shell{padding:24px 14px 50px}}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav><div class="brand">Freight<span>IQ</span></div><div class="navtag">Digital Maturity Diagnostic</div></nav>
+
+<section class="hero">
+ <div>
+  <div class="eyebrow">Freight & Logistics Assessment</div>
+  <h1>How digitally ready is your logistics operation?</h1>
+  <p>Assess five capabilities that separate manual logistics operations from intelligent, predictive networks. Answer 20 observable questions and receive a maturity radar plus a strategic next-step recommendation.</p>
+ </div>
+ <div class="hero-card">
+  <div class="metric"><span>Capability dimensions</span><b>5</b></div>
+  <div class="metric"><span>Diagnostic questions</span><b>20</b></div>
+  <div class="metric"><span>Maturity scale</span><b>1–5</b></div>
+  <div class="metric"><span>Estimated time</span><b>6 min</b></div>
+ </div>
+</section>
+
+<div class="progress-wrap">
+ <div class="progress-row"><span>Assessment progress</span><span id="progressText">0 / 20 answered</span></div>
+ <div class="progress"><div id="bar"></div></div>
+</div>
+
+<form id="assessment"></form>
+<div class="actions">
+ <button type="button" id="submitBtn">Generate maturity profile →</button>
+ <div id="error">Please answer every question before generating your results.</div>
+</div>
+
+<section id="results">
+ <div class="results-grid">
+  <div class="card chart-card">
+   <div class="result-kicker">Capability Radar</div>
+   <h2 style="margin:8px 0 18px">Your maturity footprint</h2>
+   <canvas id="radar"></canvas>
+  </div>
+  <div class="card insight-card">
+   <div class="result-kicker">Strategic Interpretation</div>
+   <div class="profile-title" id="profileTitle"></div>
+   <div class="profile-copy" id="profileCopy"></div>
+   <div class="priority"><small>Recommended next action</small><p id="nextAction"></p></div>
+   <div class="score-list" id="scoreList"></div>
+  </div>
+ </div>
+</section>
+<footer>FreightIQ · Freight & Logistics Digital Maturity Assessment</footer>
+</div>
+
+<script>
+const dimensions = [
+{
+ name:"Logistics Data Integration & Visibility",
+ short:"Data & Visibility",
+ desc:"How operational data is connected, updated, monitored and shared across the logistics network.",
+ questions:[
+  ["How are shipment, warehouse, fleet, and inventory data connected across the organization?",[
+   "Data is mainly kept in separate spreadsheets, emails, or paper records.",
+   "Some core systems exist, but teams manually transfer data between them.",
+   "Major systems exchange data on scheduled intervals, but important gaps remain.",
+   "Most major logistics systems are integrated and share near-real-time data.",
+   "A unified data layer provides real-time visibility across shipments, fleet, warehouse, and inventory."
+  ]],
+  ["How quickly can managers access an accurate view of active shipment status across operations?",[
+   "Status is assembled manually and may take a day or longer.",
+   "Teams can access digital records, but must check several systems or contact staff.",
+   "A central dashboard covers major shipments and is refreshed periodically.",
+   "Near-real-time dashboards cover nearly all active shipments and exceptions.",
+   "Real-time network visibility is available with automated exception detection and traceable data."
+  ]],
+  ["How are data quality issues such as missing scans, duplicate records, or inconsistent shipment information handled?",[
+   "Issues are usually found only after they cause an operational problem.",
+   "Staff manually review data when discrepancies are reported.",
+   "Standard validation rules exist for selected systems or processes.",
+   "Automated quality checks monitor most critical logistics data and alert owners.",
+   "Data quality is continuously monitored with automated remediation or governed workflows."
+  ]],
+  ["How is operational data shared with partners such as carriers, warehouses, brokers, or suppliers?",[
+   "Mostly through phone calls, email, spreadsheets, or documents.",
+   "Portals or file exchanges are used with a small number of partners.",
+   "Standard digital integrations are available for many important partners.",
+   "APIs/EDI integrations provide automated data exchange with most major partners.",
+   "A connected ecosystem provides real-time, governed data exchange across the partner network."
+  ]]
+]},
+{
+ name:"Digital Customer Experience & Shipment Visibility",
+ short:"Customer Experience",
+ desc:"How customers book, track, receive updates, and self-serve throughout the shipment lifecycle.",
+ questions:[
+  ["How can customers book or request freight services?",[
+   "Customers must call, email, or submit manual documents.",
+   "Digital forms exist, but staff still re-enter or process most requests manually.",
+   "A portal supports digital booking for common shipment types.",
+   "Customers can digitally quote, book, modify, and manage most shipments.",
+   "Digital booking is end-to-end, personalized, integrated with capacity/pricing, and available across channels."
+  ]],
+  ["What shipment tracking experience is available to customers?",[
+   "Customers contact staff to ask for shipment status.",
+   "Basic milestone updates are available through email or a simple portal.",
+   "Customers can view current shipment status and standard tracking milestones online.",
+   "Real-time location, ETA, and exception status are available through self-service tools.",
+   "Customers receive predictive ETA, risk alerts, and contextual recommendations before disruptions occur."
+  ]],
+  ["How are customers notified about delays, exceptions, or delivery changes?",[
+   "Notifications are manual and usually sent after a customer asks.",
+   "Staff send digital notifications manually when major issues occur.",
+   "Rule-based automated notifications cover common milestones and exceptions.",
+   "Proactive real-time alerts are triggered automatically across most shipment events.",
+   "Predictive notifications warn customers before likely disruptions and provide self-service response options."
+  ]],
+  ["How much can customers resolve without contacting an employee?",[
+   "Nearly all requests require phone or email support.",
+   "Customers can access documents or basic FAQs digitally.",
+   "Customers can handle tracking, documents, and selected account tasks themselves.",
+   "Most routine booking, tracking, documentation, billing, and exception tasks are self-service.",
+   "Intelligent self-service resolves routine needs and guides complex cases using customer and shipment context."
+  ]]
+]},
+{
+ name:"Operational Automation & Smart Logistics",
+ short:"Automation",
+ desc:"How routing, warehouse work, documentation, dispatching and scheduling move from manual to optimized workflows.",
+ questions:[
+  ["How are routes and loads planned for daily transportation operations?",[
+   "Planners build routes and loads manually using experience, calls, or spreadsheets.",
+   "Basic software assists planning, but staff make most sequencing and allocation decisions.",
+   "Optimization tools recommend routes or loads for selected operations.",
+   "Integrated systems automatically optimize most routes and loads using current constraints.",
+   "Routes and loads are continuously re-optimized as traffic, capacity, orders, and disruptions change."
+  ]],
+  ["How automated are warehouse activities such as receiving, picking, staging, and inventory movement?",[
+   "Activities rely primarily on paper, manual entry, and employee judgment.",
+   "Barcode scanning or a WMS supports some warehouse processes.",
+   "Digital workflows direct most warehouse tasks and capture activity systematically.",
+   "Automation technologies coordinate major warehouse flows with limited manual entry.",
+   "Smart warehouse systems dynamically orchestrate labor, equipment, inventory, and automated assets in real time."
+  ]],
+  ["How are freight documents such as bills of lading, proof of delivery, and shipment records processed?",[
+   "Documents are mainly paper-based or manually entered.",
+   "Documents are digital, but staff still review and re-key much of the information.",
+   "OCR/templates automate data capture for common documents.",
+   "Documents flow automatically between core systems with exception-based human review.",
+   "Document processing is touchless for standard shipments, with automated validation and exception resolution."
+  ]],
+  ["How are dispatching and scheduling decisions executed?",[
+   "Dispatchers coordinate primarily by phone, messages, and manual schedules.",
+   "A dispatch system records assignments, but changes require manual coordination.",
+   "Digital workflows automate routine assignments and schedule updates.",
+   "Dispatch is integrated with fleet, driver, order, and capacity data for automated execution.",
+   "Dynamic orchestration continuously adjusts assignments and schedules based on real-time network conditions."
+  ]]
+]},
+{
+ name:"AI & Predictive Logistics",
+ short:"AI & Predictive",
+ desc:"How predictive models and AI are used for forecasting, ETA, maintenance, and operational decision support.",
+ questions:[
+  ["How is demand or shipment volume forecasted?",[
+   "Forecasts rely mainly on historical averages, spreadsheets, or manager judgment.",
+   "Basic statistical forecasts are produced for selected planning activities.",
+   "Predictive models are regularly used for major demand or volume forecasts.",
+   "AI/ML forecasts use multiple operational and external signals and feed planning workflows.",
+   "Forecasts continuously learn from new data and automatically influence capacity, labor, or network decisions."
+  ]],
+  ["How are estimated arrival times (ETAs) produced?",[
+   "ETAs are based mainly on static schedules or manual estimates.",
+   "GPS/current location is used, but estimates are basic and inconsistently updated.",
+   "Predictive ETA models are used for selected lanes, customers, or shipment types.",
+   "Predictive ETAs are deployed broadly and use real-time traffic, route, stop, and operational data.",
+   "ETAs continuously adapt and automatically trigger downstream actions when delay risk changes."
+  ]],
+  ["How is predictive maintenance used for vehicles or logistics equipment?",[
+   "Maintenance is reactive after failure or based only on fixed schedules.",
+   "Digital maintenance records support scheduled preventive maintenance.",
+   "Condition data is monitored and predictive maintenance is piloted for selected assets.",
+   "Predictive models identify likely failures and prioritize maintenance for major asset classes.",
+   "Asset health predictions automatically influence maintenance scheduling, parts planning, and operational assignment."
+  ]],
+  ["How are AI recommendations used in operational decisions?",[
+   "AI is not used in routine operational decision-making.",
+   "Small pilots or proofs of concept exist but do not affect normal workflows.",
+   "AI recommendations support selected decisions, with employees reviewing each recommendation.",
+   "AI recommendations are embedded in multiple workflows and routinely guide employee decisions.",
+   "AI automatically executes selected low-risk decisions within defined controls, with human oversight for exceptions."
+  ]]
+]},
+{
+ name:"Digital Change & Workforce Capability",
+ short:"Change & Workforce",
+ desc:"How effectively the organization trains people, measures adoption, manages transformation, and scales innovation.",
+ questions:[
+  ["How are employees trained when new digital logistics tools are introduced?",[
+   "Training is informal, optional, or primarily learn-as-you-go.",
+   "Basic one-time training is provided during rollout.",
+   "Role-based training and documented support are provided for major tools.",
+   "Training is continuous, role-specific, and reinforced using usage/performance data.",
+   "Digital capability development is ongoing, personalized, and tied to changing roles and operational outcomes."
+  ]],
+  ["How is adoption of new digital tools measured after implementation?",[
+   "Adoption is not formally measured.",
+   "Managers gather informal feedback or occasionally review usage.",
+   "Usage metrics are tracked for major tools after launch.",
+   "Adoption, process compliance, and business outcomes are monitored through defined KPIs.",
+   "Adoption analytics continuously identify friction, trigger interventions, and inform product/process improvements."
+  ]],
+  ["How are digital transformation projects managed across the organization?",[
+   "Projects are isolated, reactive, and owned independently by individual teams.",
+   "Major projects have owners and plans, but coordination across functions is limited.",
+   "A repeatable governance process prioritizes and tracks major digital initiatives.",
+   "A cross-functional portfolio is governed using business value, adoption, risk, and delivery metrics.",
+   "Transformation is managed as an enterprise capability with continuous portfolio reprioritization based on measurable value."
+  ]],
+  ["What happens after a digital pilot demonstrates successful results?",[
+   "Successful pilots often remain local or stop when the project ends.",
+   "Teams may copy the solution informally to other locations.",
+   "A defined process exists to evaluate and scale selected successful pilots.",
+   "Successful solutions are systematically standardized and deployed across relevant operations.",
+   "Reusable platforms, change playbooks, funding, and governance allow proven innovations to scale rapidly across the network."
+  ]]
+]}
+];
+
+const profiles = {
+ foundation:{
+  title:"Build the Digital Foundation",
+  copy:"Your scores indicate broad capability gaps across the logistics operation. Adding advanced AI before core data, workflows, and adoption practices are stable would likely create isolated pilots rather than scalable value.",
+  action:"Prioritize one end-to-end shipment workflow. Standardize its data, digitize the handoffs, define ownership, and establish baseline KPIs before expanding automation."
+ },
+ frontier:{
+  title:"Connected Logistics Leader",
+  copy:"Your capabilities are consistently mature across the network. The opportunity is no longer basic digitization; it is orchestrating data, automation, AI, customers, and partners as one adaptive logistics system.",
+  action:"Select one high-value frontier use case—such as autonomous exception resolution or network-wide predictive orchestration—and scale it with clear human controls."
+ },
+ dataGap:{
+  title:"Visibility Before Intelligence",
+  copy:"Customer or operational capabilities are advancing faster than the data foundation beneath them. This can create attractive digital experiences while teams still reconcile inconsistent information behind the scenes.",
+  action:"Create a governed logistics data layer for shipment, fleet, warehouse, and inventory events, starting with the data required by your highest-value operational decisions."
+ },
+ digitalized:{
+  title:"Digitalized, Not Yet Predictive",
+  copy:"Your customer-facing digital capabilities are stronger than your AI and predictive capabilities. The organization has digitized interactions, but is not yet fully converting its data exhaust into forward-looking decisions.",
+  action:"Use existing tracking and transaction data to deploy one production predictive use case, such as dynamic ETA or delay-risk prediction, and measure operational impact."
+ },
+ executionGap:{
+  title:"The Execution Gap",
+  copy:"Technology capabilities are moving faster than workforce adoption and change capacity. The main constraint is less about buying another platform and more about getting existing tools embedded consistently into daily work.",
+  action:"Choose one under-adopted digital workflow, measure usage and process compliance by role/location, and run a targeted adoption sprint before funding the next major rollout."
+ },
+ bottleneck:{
+  title:"Strength With a Bottleneck",
+  copy:"Your maturity profile is uneven: several capabilities are progressing, but one or two weaker dimensions can constrain the value of the stronger ones. In logistics, the weakest link often limits end-to-end performance.",
+  action:"Focus the next improvement cycle on the two lowest-scoring dimensions shown below and define one measurable 90-day capability milestone for each."
+ }
+};
+
+const form=document.getElementById("assessment");
+let qIndex=0;
+dimensions.forEach((d,di)=>{
+ const section=document.createElement("section");
+ section.className="dimension card";
+ section.innerHTML=`<div class="dim-head"><div class="num">0${di+1}</div><div><h2>${d.name}</h2><p>${d.desc}</p></div></div>`;
+ d.questions.forEach((q,qi)=>{
+  const global=qIndex++;
+  const block=document.createElement("div");
+  block.className="question";
+  block.innerHTML=`<div class="q-title">${global+1}. ${q[0]}</div><div class="options">${
+   q[1].map((txt,i)=>`<div class="option"><input type="radio" id="q${global}_${i+1}" name="q${global}" value="${i+1}" data-dim="${di}"><label for="q${global}_${i+1}"><span class="level">${i+1}</span><span>${txt}</span></label></div>`).join("")
+  }</div>`;
+  section.appendChild(block);
+ });
+ form.appendChild(section);
+});
+
+function updateProgress(){
+ const answered=new Set([...document.querySelectorAll('input[type=radio]:checked')].map(x=>x.name)).size;
+ document.getElementById("progressText").textContent=`${answered} / ${qIndex} answered`;
+ document.getElementById("bar").style.width=`${answered/qIndex*100}%`;
+}
+document.addEventListener("change",e=>{if(e.target.matches('input[type=radio]'))updateProgress()});
+
+let radarChart=null;
+function chooseProfile(scores){
+ const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
+ const [data,customer,automation,ai,change]=scores;
+ if(scores.every(s=>s<=2.2)) return profiles.foundation;
+ if(scores.every(s=>s>=4.0)) return profiles.frontier;
+ if(data+0.8 < (customer+automation+ai+change)/4) return profiles.dataGap;
+ if(customer>=3.5 && ai<=2.7 && customer-ai>=0.8) return profiles.digitalized;
+ if(change+0.8 < (data+customer+automation+ai)/4) return profiles.executionGap;
+ return profiles.bottleneck;
+}
+
+document.getElementById("submitBtn").addEventListener("click",()=>{
+ const checked=[...document.querySelectorAll('input[type=radio]:checked')];
+ const err=document.getElementById("error");
+ if(new Set(checked.map(x=>x.name)).size!==qIndex){
+  err.style.display="block";
+  const firstMissing=[...document.querySelectorAll(".question")].find(q=>!q.querySelector("input:checked"));
+  if(firstMissing) firstMissing.scrollIntoView({behavior:"smooth",block:"center"});
+  return;
+ }
+ err.style.display="none";
+ const totals=dimensions.map(()=>({sum:0,count:0}));
+ checked.forEach(x=>{const d=+x.dataset.dim; totals[d].sum+=+x.value; totals[d].count++});
+ const scores=totals.map(x=>+(x.sum/x.count).toFixed(2));
+ const indexed=scores.map((s,i)=>({s,i})).sort((a,b)=>a.s-b.s || a.i-b.i);
+ // Identify the two lowest score levels; include all dimensions tied at those levels.
+ const uniqueScores=[...new Set(indexed.map(x=>x.s))];
+ const cutoff=uniqueScores.length>1 ? uniqueScores[1] : uniqueScores[0];
+ const lowIdx=indexed.filter(x=>x.s<=cutoff).map(x=>x.i);
+ const p=chooseProfile(scores);
+
+ document.getElementById("profileTitle").textContent=p.title;
+ document.getElementById("profileCopy").textContent=p.copy;
+ document.getElementById("nextAction").textContent=p.action;
+ document.getElementById("scoreList").innerHTML=scores.map((s,i)=>
+  `<div class="score-row"><span class="${lowIdx.includes(i)?'low':''}">${dimensions[i].short}${lowIdx.includes(i)?' · priority':''}</span><b>${s.toFixed(2)} / 5</b></div>`
+ ).join("");
+
+ const ctx=document.getElementById("radar");
+ if(radarChart) radarChart.destroy();
+ radarChart=new Chart(ctx,{
+  type:"radar",
+  data:{
+   labels:dimensions.map(d=>d.name),
+   datasets:[{
+    label:"Maturity score",data:scores,
+    backgroundColor:"rgba(72,214,181,.16)",borderColor:"#48d6b5",
+    pointBackgroundColor:"#5da9ff",pointBorderColor:"#fff",borderWidth:2,pointRadius:4
+   }]
+  },
+  options:{
+   responsive:true,
+   scales:{r:{min:0,max:5,ticks:{stepSize:1,color:"#8ea5bb",backdropColor:"transparent"},grid:{color:"rgba(255,255,255,.10)"},angleLines:{color:"rgba(255,255,255,.10)"},pointLabels:{color:"#dbe9f5",font:{size:11,weight:"600"}}}},
+   plugins:{legend:{display:false}}
+  }
+ });
+ const results=document.getElementById("results");
+ results.style.display="block";
+ results.scrollIntoView({behavior:"smooth",block:"start"});
+});
+</script>
+</body>
+</html>
